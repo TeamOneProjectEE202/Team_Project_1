@@ -242,3 +242,87 @@ class ManualPlacementWindow(QMainWindow):
 
 
 # Battle Window
+from PyQt5.QtCore import QTimer
+
+class BattleWindow(QMainWindow):
+    def __init__(self, game):
+        super().__init__()
+        self.game = game
+        self.setWindowTitle("Battle - Player vs AI")
+        self.setGeometry(100, 100, 800, 600)
+        self.timer = QTimer(self)  # Create a QTimer instance
+        self.timer.timeout.connect(self.update_timer)  # Connect timer to update function
+        self.timer.start(1000)  # Update every 1 second
+        self.initUI()
+
+    #mohammed
+
+    def player_attack(self, row, col):
+        if self.game.ai_hidden_board[row][col] in ["H", "O"]:
+            QMessageBox.information(self, "Invalid Move", "You already attacked this spot!")
+            return
+
+        if self.game.ai_board[row][col] == "X":
+            self.game.ai_hidden_board[row][col] = "H"
+            self.game.ai_board[row][col] = "H"
+            self.ai_buttons[row][col].setText("H")
+            self.ai_buttons[row][col].setStyleSheet("background-color: red")
+            self.game.score += 10
+            QMessageBox.information(self, "Hit", "You hit an AI ship!")
+
+            for ship in self.game.ai.ships:
+                if (row, col) in ship.coordinates:
+                    ship.hits += 1
+                    if ship.is_sunk():
+                        self.game.score += 50
+                        self.game.ship_counter -= 1
+                        self.counter_label.setText(f"Remaining AI Ships: {self.game.ship_counter}")
+                        QMessageBox.information(self, "Ship Sunk", f"You sunk the AI's {ship.name}!")
+
+        else:
+            self.game.ai_hidden_board[row][col] = "O"
+            self.game.ai_board[row][col] = "O"
+            self.ai_buttons[row][col].setText("O")
+            self.ai_buttons[row][col].setStyleSheet("background-color: blue")
+            self.game.score -= 1
+
+        self.score_label.setText(f"Score: {self.game.score}")
+
+        if all(cell != "X" for row in self.game.ai_board for cell in row):
+            QMessageBox.information(self, "Victory", "You sank all AI ships!")
+            sys.exit()
+
+        self.ai_turn()
+
+
+    def ai_turn(self):
+        hit = self.game.ai.attack(self.game.player_board)
+
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if self.game.player_board[row][col] == "H":
+                    self.player_buttons[row][col].setText("H")
+                    self.player_buttons[row][col].setStyleSheet("background-color: red")
+                elif self.game.player_board[row][col] == "O":
+                    self.player_buttons[row][col].setText("O")
+                    self.player_buttons[row][col].setStyleSheet("background-color: blue")
+
+        if all(cell != "X" for row in self.game.player_board for cell in row):
+            QMessageBox.information(self, "Defeat", "AI sank all your ships!")
+            sys.exit()
+
+def main():
+    app = QApplication(sys.argv)
+    game = BattleshipGame()
+    start_window = StartWindow()
+    start_window.game = game
+    start_window.show()
+    sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()
+    
+
+
+
+

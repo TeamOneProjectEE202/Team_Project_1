@@ -1,4 +1,15 @@
 # import must be written here
+import random
+import sys
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QGridLayout, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QRadioButton
+)
+from PyQt5.QtCore import Qt, QProcess
+
+
+BOARD_SIZE = 10
+
+LETTERS_TO_NUM = {chr(65 + i): i for i in range(BOARD_SIZE)}
 
 # Ship Class
 class Ship:
@@ -88,6 +99,76 @@ class BattleshipGame(QMainWindow):
     def initUI(self):
         pass
 #  StartWindow(QMainWindow) class
+class StartWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Welcome to Battleship!")
+        self.setGeometry(100, 100, 800, 600)
+        self.initUI()
+
+    def initUI(self):
+        # Main layout
+        layout = QVBoxLayout()
+
+        # Welcome message
+        welcome_label = QLabel("Welcome to the Battleship Game!")
+        welcome_label.setAlignment(Qt.AlignCenter)
+        welcome_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        layout.addWidget(welcome_label)
+
+        # Instructions
+        instructions_label = QLabel(
+            "Prepare for a thrilling naval battle! \nPlace your ships and outwit the AI to win."
+        )
+        instructions_label.setAlignment(Qt.AlignCenter)
+        instructions_label.setStyleSheet("font-size: 16px;")
+        layout.addWidget(instructions_label)
+
+        # Start button
+        start_button = QPushButton("Start Game")
+        start_button.setStyleSheet("font-size: 18px; padding: 10px;")
+        start_button.clicked.connect(self.start_game)  # Connect to the game start method
+        layout.addWidget(start_button)
+
+        # Instructions button
+        instructions_button = QPushButton("Instructions")
+        instructions_button.setStyleSheet("font-size: 18px; padding: 10px;")
+        instructions_button.clicked.connect(self.show_instructions)  # Connect to the instructions method
+        layout.addWidget(instructions_button)
+
+        # Set central widget
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
+
+    def start_game(self):
+        self.close()  # Close the start window
+        self.placement_window = PlacementWindow(self.game)
+        self.placement_window.show()
+
+    def show_instructions(self):
+        # Show a dialog with game instructions
+        instructions = (
+            "Welcome to Battleship!\n\n"
+            "Goal:\n"
+            "Sink all the opponent's ships before they sink yours.\n\n"
+            "Instructions:\n"
+            "1. You can place your ships manually or randomly.\n"
+            "2. During your turn, click on the AI's board to attack a cell.\n"
+            "3. A hit will be marked in red (H), and a miss in blue (O).\n"
+            "4. AI will then take its turn to attack your board.\n\n"
+            "Win Condition:\n"
+            "Destroy all enemy ships to win the game!\n"
+            "Good luck!"
+        )
+        QMessageBox.information(self, "Instructions", instructions)
+
+
+    def start_game(self):
+        self.close()  # Close the start window
+        self.placement_window = PlacementWindow(self.game)
+        self.placement_window.show()
+
 
 
 #   PlacementWindow class 

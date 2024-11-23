@@ -316,7 +316,81 @@ class BattleWindow(QMainWindow):
         self.timer.start(1000)  # Update every 1 second
         self.initUI()
 
-    #mohammed
+        def initUI(self):
+        main_layout = QVBoxLayout()
+
+        # Timer Label
+        self.timer_label = QLabel("Time: 0s")
+        self.timer_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.timer_label)
+
+        # Ship Counter Label
+        self.counter_label = QLabel(f"Remaining AI Ships: {self.game.ship_counter}")
+        self.counter_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.counter_label)
+
+        # Score Label
+        self.score_label = QLabel(f"Score: {self.game.score}")
+        self.score_label.setAlignment(Qt.AlignCenter)
+        main_layout.addWidget(self.score_label)
+
+        # Player and AI Board
+        player_label = QLabel("Your Board:")
+        self.player_grid = QGridLayout()
+        self.player_buttons = [[QPushButton("~") for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+        for i in range(BOARD_SIZE):
+            for j in range(BOARD_SIZE):
+                self.player_buttons[i][j].setFixedSize(30, 30)
+                self.player_grid.addWidget(self.player_buttons[i][j], i, j)
+        main_layout.addWidget(player_label)
+        main_layout.addLayout(self.player_grid)
+
+        ai_label = QLabel("AI Board (Hidden):")
+        self.ai_grid = QGridLayout()
+        self.ai_buttons = [[QPushButton("~") for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
+        for i in range(BOARD_SIZE):
+            for j in range(BOARD_SIZE):
+                self.ai_buttons[i][j].setFixedSize(30, 30)
+                self.ai_buttons[i][j].clicked.connect(lambda _, r=i, c=j: self.player_attack(r, c))
+                self.ai_grid.addWidget(self.ai_buttons[i][j], i, j)
+        main_layout.addWidget(ai_label)
+        main_layout.addLayout(self.ai_grid)
+
+        restart_button = QPushButton("Restart Game")
+        restart_button.clicked.connect(self.restart_game)
+        main_layout.addWidget(restart_button)
+
+        central_widget = QWidget()
+        central_widget.setLayout(main_layout)
+        self.setCentralWidget(central_widget)
+
+        self.start_game()
+
+    def update_timer(self):
+        self.game.elapsed_time += 1
+        self.timer_label.setText(f"Time: {self.game.elapsed_time}s")
+
+    def restart_game(self):
+        QMessageBox.information(self, "Restarting", "The game will restart.")
+        QApplication.quit()
+        QProcess.startDetached(sys.executable, sys.argv)
+
+
+    def start_game(self):
+        for ship in ship_list:
+            placed = False
+            while not placed:
+                row = random.randint(0, BOARD_SIZE - 1)
+                col = random.randint(0, BOARD_SIZE - 1)
+                direction = random.randint(0, 1)
+                if self.game.ai.is_space_available(row, col, ship.size, direction):
+                    self.game.ai.place_ship(ship, row, col, direction)
+                    placed = True
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                if self.game.player_board[row][col] == "X":
+                    self.player_buttons[row][col].setText("X")
+                    self.player_buttons[row][col].setStyleSheet("background-color: gray")
 
     def player_attack(self, row, col):
         if self.game.ai_hidden_board[row][col] in ["H", "O"]:

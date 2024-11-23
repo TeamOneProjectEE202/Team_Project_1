@@ -1,10 +1,9 @@
-# import must be written here
 import random
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QGridLayout, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QRadioButton
 )
-from PyQt5.QtCore import Qt, QProcess
+from PyQt5.QtCore import Qt, QProcess, QTimer 
 
 
 BOARD_SIZE = 10
@@ -98,6 +97,7 @@ class BattleshipGame(QMainWindow):
 
     def initUI(self):
         pass
+        
 #  StartWindow(QMainWindow) class
 class StartWindow(QMainWindow):
     def __init__(self):
@@ -242,8 +242,6 @@ class ManualPlacementWindow(QMainWindow):
 
 
 # Battle Window
-from PyQt5.QtCore import QTimer
-
 class BattleWindow(QMainWindow):
     def __init__(self, game):
         super().__init__()

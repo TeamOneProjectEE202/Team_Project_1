@@ -29,30 +29,30 @@ class Player:
     def all_ships_sunk(self):
         return all(ship.is_sunk() for ship in self.ships)
         
-    def is_space_available(self, row, col, size, direction):
+    def is_space_available(self, row, column, size, direction):
         if direction == 0:
-            if col + size > BOARD_SIZE:
+            if column + size > BOARD_SIZE:
                 return False
             for i in range(size):
-                if self.board[row][col + i] != " ":
+                if self.board[row][column + i] != " ":
                     return False
         else:
             if row + size > BOARD_SIZE:
                 return False
             for i in range(size):
-                if self.board[row + i][col] != " ":
+                if self.board[row + i][column] != " ":
                     return False
             return True
             
-    def place_ship(self, ship, row, col, direction):
+    def place_ship(self, ship, row, column, direction):
         if direction == 0:
             for i in range(ship.size):
-                self.board[row][col + i] = "X"
-                ship.coordinates.append((row, col + i))
+                self.board[row][column + i] = "X"
+                ship.coordinates.append((row, column + i))
         else:
             for i in range(ship.size):
-                self.board[row + i][col] = "X"
-                ship.coordinates.append((row + i, col))
+                self.board[row + i][column] = "X"
+                ship.coordinates.append((row + i, column))
         self.ships.append(ship)
 
 # AI Player Class
@@ -63,37 +63,37 @@ class AIPlayer(Player):
         self.attacked_cells = set()
 
     def attack(self, player_board):
-        row, col = self.get_new_attack_target(player_board)
+        row, column = self.get_new_attack_target(player_board)
 
-        if player_board[row][col] == "X":
-            player_board[row][col] = "H"
-            self.add_surrounding_targets(row, col, player_board)
-            print(f"AI hit at {row + 1}, {chr(65 + col)}!")
+        if player_board[row][column] == "X":
+            player_board[row][column] = "H"
+            self.add_surrounding_targets(row, column, player_board)
+            print(f"AI hit at {row + 1}, {chr(65 + column)}!")
             return True
         else:
-            player_board[row][col] = "O"
-            print(f"AI miss at {row + 1}, {chr(65 + col)}.")
+            player_board[row][column] = "O"
+            print(f"AI miss at {row + 1}, {chr(65 + column)}.")
             return False
 
     def get_new_attack_target(self, player_board):
         while True:
             if self.targets:
-                row, col = self.targets.pop(0)
+                row, column = self.targets.pop(0)
             else:
-                row, col = random.randint(0, BOARD_SIZE - 1), random.randint(0, BOARD_SIZE - 1)
+                row, column = random.randint(0, BOARD_SIZE - 1), random.randint(0, BOARD_SIZE - 1)
 
-            if (row, col) not in self.attacked_cells:
-                self.attacked_cells.add((row, col))
+            if (row, column) not in self.attacked_cells:
+                self.attacked_cells.add((row, column))
                 break
-        return row, col
+        return row, column
 
-    def add_surrounding_targets(self, row, col, player_board):
+    def add_surrounding_targets(self, row, column, player_board):
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-        for dr, dc in directions:
-            nr, nc = row + dr, col + dc
-            if 0 <= nr < BOARD_SIZE and 0 <= nc < BOARD_SIZE:
-                if player_board[nr][nc] not in ["H", "O"]:
-                    self.targets.append((nr, nc))
+        for row_direction, column_direction in directions:
+            new_row, new_column = row + row_direction, column + column_direction
+            if 0 <= new_row < BOARD_SIZE and 0 <= new_column < BOARD_SIZE:
+                if player_board[new_row][new_column] not in ["H", "O"]:
+                    self.targets.append((new_row, new_column))
 
 # Human Player Class
 class HumanPlayerShips(Player):

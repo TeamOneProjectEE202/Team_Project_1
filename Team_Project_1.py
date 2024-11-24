@@ -25,8 +25,10 @@ class Player:
     def __init__(self, board):
         self.board = board
         self.ships = []
+        
     def all_ships_sunk(self):
         return all(ship.is_sunk() for ship in self.ships)
+        
     def is_space_available(self, row, col, size, direction):
         if direction == 0:
             if col + size > BOARD_SIZE:
@@ -41,6 +43,7 @@ class Player:
                 if self.board[row + i][col] != " ":
                     return False
             return True
+            
     def place_ship(self, ship, row, col, direction):
         if direction == 0:
             for i in range(ship.size):
@@ -50,7 +53,7 @@ class Player:
             for i in range(ship.size):
                 self.board[row + i][col] = "X"
                 ship.coordinates.append((row + i, col))
-        self.ships.append(self)
+        self.ships.append(ship)
 
 # AI Player Class
 class AIPlayer(Player):

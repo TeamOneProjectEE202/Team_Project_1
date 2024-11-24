@@ -26,16 +26,16 @@ class Player:
         self.board = board
         self.ships = []
     def all_ships_sunk(self):
-        return all(ship.is.sunk() for ship in self.ships)
+        return all(ship.is_sunk() for ship in self.ships)
     def is_space_available(self, row, col, size, direction):
         if direction == 0:
-            if col + size > board_size:
+            if col + size > BOARD_SIZE:
                 return False
             for i in range(size):
                 if self.board[row][col + i] != " ":
                     return False
         else:
-            if row + size > board_size:
+            if row + size > BOARD_SIZE:
                 return False
             for i in range(size):
                 if self.board[row + i][col] != " ":
@@ -200,7 +200,7 @@ class StartWindow(QMainWindow):
         self.placement_window.show()
         
 #   PlacementWindow class
-class PlacementWindow(QMainWindwow):
+class PlacementWindow(QMainWindow):
     def __init__(self, game):
         super().__init__()
         self.game = game
@@ -209,18 +209,23 @@ class PlacementWindow(QMainWindwow):
         self.initUI()
     def initUI(self):
         layout = QVBoxLayout()
+        
         label = QLabel("Choose your Ship Placement Method: ")
         label.setAlignment(Qt.AlignCenter)
         layout.addWidget(label)
+        
         self.manual_button = QPushButton("Manual Placement")
         self.manual_button.clicked.connect(self.manual_placement)
-        layout.addWidget(self.manual_placement)
-        self.random_button - QPushButton("Random Placement")
+        layout.addWidget(self.manual_button)
+        
+        self.random_button = QPushButton("Random Placement")
         self.random_button.clicked.connect(self.random_placement)
-        layout.addWidet(self.random_placement)
+        layout.addWidget(self.random_button)
+        
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+    
     def manual_placement(self):
         self.close()
         self.manual_window = ManualPlacementWindow(self.game)
@@ -229,8 +234,8 @@ class PlacementWindow(QMainWindwow):
         for ship in ship_list:
             placed = False
             while not placed:
-                row = random.randint(0, board_size - 1)
-                col = random.randint(0, board_size - 1)
+                row = random.randint(0, BOARD_SIZE - 1)
+                col = random.randint(0, BOARD_SIZE - 1)
                 direction = random.randint(0, 1)
                 if self.game.player.is_space_available(row, col, ship.size, direction):
                     self.game.player.place_ship(ship, row, col, direction)
@@ -316,7 +321,7 @@ class BattleWindow(QMainWindow):
         self.timer.start(1000)  # Update every 1 second
         self.initUI()
 
-        def initUI(self):
+    def initUI(self):
         main_layout = QVBoxLayout()
 
         # Timer Label

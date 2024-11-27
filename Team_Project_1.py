@@ -2,8 +2,9 @@ import random
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QGridLayout, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QRadioButton
-)
+    QSlider, QDialog, QCheckBox)
 from PyQt5.QtCore import Qt, QProcess, QTimer 
+from PyQt5.QtMultimedia import QMediaPlayer
 
 
 BOARD_SIZE = 10
@@ -146,7 +147,7 @@ class StartWindow(QMainWindow):
         # Welcome message
         welcome_label = QLabel("Welcome to the Battleship Game!")
         welcome_label.setAlignment(Qt.AlignCenter)
-        welcome_label.setStyleSheet("font-size: 24px; font-weight: bold;")
+        welcome_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
         layout.addWidget(welcome_label)
 
         # Instructions
@@ -154,25 +155,42 @@ class StartWindow(QMainWindow):
             "Prepare for a thrilling naval battle! \nPlace your ships and outwit the AI to win."
         )
         instructions_label.setAlignment(Qt.AlignCenter)
-        instructions_label.setStyleSheet("font-size: 16px;")
+        instructions_label.setStyleSheet("font-size: 16px; color: white;")
         layout.addWidget(instructions_label)
 
         # Start button
-        start_button = QPushButton("Start Game")
-        start_button.setStyleSheet("font-size: 18px; padding: 10px;")
+        start_button = QPushButton("New Game")
+        start_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color: black;")
         start_button.clicked.connect(self.start_game)  # Connect to the game start method
         layout.addWidget(start_button)
 
         # Instructions button
         instructions_button = QPushButton("Instructions")
-        instructions_button.setStyleSheet("font-size: 18px; padding: 10px;")
+        instructions_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color: black;")
         instructions_button.clicked.connect(self.show_instructions)  # Connect to the instructions method
         layout.addWidget(instructions_button)
+
+        # Load game button
+        load_button = QPushButton("Load Game")
+        load_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color:black;")
+        load_button.clicked.connect(self.load_game)  # Connect to load game method
+        layout.addWidget(load_button)
 
         # Set central widget
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
+
+        # Settings button
+        settings_button = QPushButton("Settings")
+        settings_button.setStyleSheet("font-size: 18px; color: white; background-color: black;")
+        settings_button.clicked.connect(self.open_settings)
+        layout.addWidget(settings_button)
+
+    def open_settings(self):
+        # Open the Settings window and pass the music object
+        self.settings_window = SettingsWindow(self.music)  # Pass the music object
+        self.settings_window.exec_()
 
     def start_game(self):
         self.close()  # Close the start window
@@ -197,10 +215,31 @@ class StartWindow(QMainWindow):
         QMessageBox.information(self, "Instructions", instructions)
 
 
-    def start_game(self):
-        self.close()  # Close the start window
-        self.placement_window = PlacementWindow(self.game)
-        self.placement_window.show()
+    def load_game(self):
+        # Load the latest game state
+        self.game = BattleshipGame()
+        self.game.load_game()
+        self.close()
+        self.battle_window = BattleWindow(self.game)
+        self.battle_window.update_boards()  # Update boards in BattleWindow
+        self.battle_window.show() 
+
+class SettingsWindow(QDialog):
+    def __init__(self, music):
+        super().__init__()
+        self.music = music  # Store the music object
+        self.setWindowTitle("Settings")
+        self.setGeometry(200, 200, 400, 300)
+        
+        layout = QVBoxLayout()
+    
+        # Volume Slider
+        volume_label = QLabel("Volume:")
+        self.volume_slider = QSlider(Qt.Horizontal)
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(self.music.player.volume())  # Set initial value based on current volume
+        layout.addWidget(volume_label)
+        layout.addWidget(self.volume_slider)
         
 #   PlacementWindow class
 class PlacementWindow(QMainWindow):

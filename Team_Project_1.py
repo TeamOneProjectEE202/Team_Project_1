@@ -17,11 +17,11 @@ class Ship:
     def __init__(self, name, size):
         self.name = name
         self.size = size
-        self.coordinates = []
-        self.hits = 0
+        self.coordinates = [] 
+        self.hits = 0  # The number of times the ship has been hit
 
     def is_sunk(self):
-        return self.hits >= self.size
+        return self.hits >= self.size  # Checks whether the ship is "sunk"
 # Player Class
 class Player:
     def __init__(self, board):
@@ -62,10 +62,10 @@ class Player:
 class AIPlayer(Player):
     def __init__(self, board):
         super().__init__(board)
-        self.targets = []
+        self.targets = []  # Target coordinates for the next attack
         self.attacked_cells = set()
 
-    def attack(self, player_board):
+    def attack(self, player_board):  # AI attack on the player board
         row, column = self.get_new_attack_target(player_board)
 
         if player_board[row][column] == "X":
@@ -78,7 +78,7 @@ class AIPlayer(Player):
             print(f"AI miss at {row + 1}, {chr(65 + column)}.")
             return False
 
-    def get_new_attack_target(self, player_board):
+    def get_new_attack_target(self, player_board): # Gets the next target for the AI
         while True:
             if self.targets:
                 row, column = self.targets.pop(0)
@@ -90,7 +90,7 @@ class AIPlayer(Player):
                 break
         return row, column
 
-    def add_surrounding_targets(self, row, column, player_board):
+    def add_surrounding_targets(self, row, column, player_board):  # Adds the coordinates of the hits to the targets list
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         for row_direction, column_direction in directions:
             new_row, new_column = row + row_direction, column + column_direction
@@ -170,10 +170,8 @@ class BattleshipGame(QMainWindow):
             }
             for ship in self.ai.ships
         ]
-    def initUI(self):
-        pass
         
-#  StartWindow(QMainWindow) class
+#  Start Window class
 class StartWindow(QMainWindow):
     def __init__(self, music):
         super().__init__()

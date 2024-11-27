@@ -1,5 +1,6 @@
 import random
 import sys
+import sqlite3
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QGridLayout, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QRadioButton
     QSlider, QDialog, QCheckBox)
@@ -96,7 +97,16 @@ class AIPlayer(Player):
             if 0 <= new_row < BOARD_SIZE and 0 <= new_column < BOARD_SIZE:
                 if player_board[new_row][new_column] not in ["H", "O"]:
                     self.targets.append((new_row, new_column))
-                    
+
+# List of Ships
+ship_list = [
+    Ship("Aircraft Carrier", 5),
+    Ship("Battleship", 4),
+    Ship("Submarine", 3),
+    Ship("Destroyer", 3),
+    Ship("Patrol Boat", 2),
+]
+
 # Main Game Class
 class BattleshipGame(QMainWindow):
     def __init__(self):

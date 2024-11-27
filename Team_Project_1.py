@@ -20,7 +20,7 @@ class Ship:
         self.hits = 0
 
     def is_sunk(self):
-        return self.hits == self.size
+        return self.hits >= self.size
 # Player Class
 class Player:
     def __init__(self, board):
@@ -43,9 +43,10 @@ class Player:
             for i in range(size):
                 if self.board[row + i][column] != " ":
                     return False
-            return True
+        return True
             
     def place_ship(self, ship, row, column, direction):
+        ship.coordinates.clear()
         if direction == 0:
             for i in range(ship.size):
                 self.board[row][column + i] = "X"
@@ -95,21 +96,7 @@ class AIPlayer(Player):
             if 0 <= new_row < BOARD_SIZE and 0 <= new_column < BOARD_SIZE:
                 if player_board[new_row][new_column] not in ["H", "O"]:
                     self.targets.append((new_row, new_column))
-
-# Human Player Class
-class HumanPlayerShips(Player):
-    def __init__(self, board):
-        super().__init__(board)
-
-# List of Ships
-ship_list = [
-    Ship("Aircraft Carrier", 5),
-    Ship("Battleship", 4),
-    Ship("Submarine", 3),
-    Ship("Destroyer", 3),
-    Ship("Patrol Boat", 2),
-]
-
+                    
 # Main Game Class
 class BattleshipGame(QMainWindow):
     def __init__(self):
@@ -122,13 +109,57 @@ class BattleshipGame(QMainWindow):
         self.player_hidden_board = [[" "] * BOARD_SIZE for _ in range(BOARD_SIZE)]
         self.ai_hidden_board = [[" "] * BOARD_SIZE for _ in range(BOARD_SIZE)]
 
-        self.player = HumanPlayerShips(self.player_board)
+        self.player = Player(self.player_board)
         self.ai = AIPlayer(self.ai_board)
         self.score = 0  # Initialize score
         self.elapsed_time = 0  # Initialize elapsed time
         self.ship_counter = 5  # Initialize ship counter (AI has 5 ships)
+        # Creating Datastores using le sqlite daetbaese:
+        self.database = sqlite3.connect("BattleShipGame_1.db")
+        self.cursor = self.database.cursor()
+        self.create_tables()
+        self.create_menu()
 
+    def create_menu(self):
+        menu_bar = self.menuBar()
+        file_menu = menu_bar.addMenu("File")
+        save_action = file_menu.addAction("Save Game")
+        save_action.triggered.connect(self.save_game)
+        load_action = file_menu.addAction("Load Game")
+        load_action.triggered.connect(self.load_game)
 
+    def create_tables(self):
+        # Making the tables for our datastore][.
+        self.cursor.execute('''
+            create table if not exists game_state(
+            id integer primary key autoincrement,
+            player_board text,
+            ai_board text,
+            player_hidden_board text,
+            ai_hidden_board text,
+            score integer,
+            elapsed_time integer,
+            ship_counter integer, 
+            ai_ships_state text
+        )
+    ''')
+        self.database.commit()
+    def save_game(self):
+        player_board_str = "\n".join(["".join(row) for row in self.player_board])
+        ai_board_str = "\n".join(["".join(row) for row in self.ai_board)]
+        player_hidden_board_str = "\n".join(["".join(row) for row in self.player_hidden_board])
+        ai_hidden_board_str = "\n".join(["".join(row) for row in self.ai_hidden_board])
+
+        # making a nice little dictionary for our ships
+        ai_ships_state = [
+            {
+                "name" : ship.name,
+                "size" : ship.size,
+                "coordinates" : ship.coordinates,
+                "hits" : ship.hits
+            }
+            for ship in self.ai.ships
+        ]
     def initUI(self):
         pass
         

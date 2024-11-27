@@ -291,50 +291,98 @@ class SettingsWindow(QDialog):
         layout.addWidget(volume_label)
         layout.addWidget(self.volume_slider)
         
-#   PlacementWindow class
+        # Music Toggle
+        self.music_toggle = QCheckBox("Enable Music")
+        self.music_toggle.setStyleSheet("font-size: 18px; color: white; background-color: black;")
+        self.music_toggle.setChecked(self.music.player.state() == QMediaPlayer.PlayingState)  # Check state
+        layout.addWidget(self.music_toggle)
+
+        # Save Button
+        save_button = QPushButton("Save Settings")
+        save_button.setStyleSheet("font-size: 18px; color: white; background-color: black;")
+        save_button.clicked.connect(self.save_settings)  # Connect the correct method
+        layout.addWidget(save_button)
+
+        self.setLayout(layout)
+
+    def save_settings(self):
+        # Save volume
+        volume = self.volume_slider.value()
+        self.music.set_volume(volume)
+
+        # Enable/disable music
+        if self.music_toggle.isChecked():
+            if self.music.player.state() != QMediaPlayer.PlayingState:
+                self.music.play()
+        else:
+            if self.music.player.state() == QMediaPlayer.PlayingState:
+                self.music.pause()
+
+        QMessageBox.information(self, "Settings Saved", "Your settings have been saved.")
+        self.accept()  # Close the settings window
+        
+# Placement Window
 class PlacementWindow(QMainWindow):
     def __init__(self, game):
         super().__init__()
         self.game = game
-        self.setWindowTitle("Place your Ships: ")
+        self.setWindowTitle("Place Your Ships")
         self.setGeometry(100, 100, 800, 600)
+    
+        self.background_label = QLabel(self)
+        pixmap = QPixmap("############Main.jpg") 
+        self.background_label.setPixmap(pixmap)
+        self.background_label.setScaledContents(True)
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+
         self.initUI()
+    def resizeEvent(self, event):
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+        super().resizeEvent(event)
+
     def initUI(self):
         layout = QVBoxLayout()
-        
-        label = QLabel("Choose your Ship Placement Method: ")
+
+        # Title
+        label = QLabel("Choose Ship Placement Method:")
         label.setAlignment(Qt.AlignCenter)
+        label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
         layout.addWidget(label)
-        
+
+        # Options
         self.manual_button = QPushButton("Manual Placement")
+        self.manual_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color:black;")
         self.manual_button.clicked.connect(self.manual_placement)
         layout.addWidget(self.manual_button)
-        
+
         self.random_button = QPushButton("Random Placement")
+        self.random_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color:black;")
         self.random_button.clicked.connect(self.random_placement)
         layout.addWidget(self.random_button)
-        
+
         central_widget = QWidget()
         central_widget.setLayout(layout)
         self.setCentralWidget(central_widget)
-    
+
     def manual_placement(self):
         self.close()
         self.manual_window = ManualPlacementWindow(self.game)
         self.manual_window.show()
+
     def random_placement(self):
         for ship in ship_list:
             placed = False
             while not placed:
                 row = random.randint(0, BOARD_SIZE - 1)
-                col = random.randint(0, BOARD_SIZE - 1)
-                direction = random.randint(0, 1)
-                if self.game.player.is_space_available(row, col, ship.size, direction):
-                    self.game.player.place_ship(ship, row, col, direction)
+                column = random.randint(0, BOARD_SIZE - 1)
+                direction = random.randint(0, 1)  # 0 = Horizontal, 1 = Vertical
+                if self.game.player.is_space_available(row, column, ship.size, direction):
+                    self.game.player.place_ship(ship, row, column, direction)
                     placed = True
         self.close()
         self.battle_window = BattleWindow(self.game)
         self.battle_window.show()
+
 
 # Manual Placement Window
 class ManualPlacementWindow(QMainWindow):
@@ -346,7 +394,18 @@ class ManualPlacementWindow(QMainWindow):
 
         self.current_ship_index = 0
         self.direction = 0
+
+        self.background_label = QLabel(self)
+        pixmap = QPixmap("#################Battle.jpg") 
+        self.background_label.setPixmap(pixmap)
+        self.background_label.setScaledContents(True)
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+
         self.initUI()
+
+    def resizeEvent(self, event):
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+        super().resizeEvent(event)
 
     def initUI(self):
         layout = QVBoxLayout()
@@ -360,17 +419,19 @@ class ManualPlacementWindow(QMainWindow):
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
                 self.buttons[i][j].setFixedSize(30, 30)
-                self.buttons[i][j].clicked.connect(lambda _, r=i, c=j: self.place_ship(r, c))
+                self.buttons[i][j].clicked.connect(lambda _, row=i, column=j: self.place_ship(row, column))
                 self.grid.addWidget(self.buttons[i][j], i, j)
         layout.addLayout(self.grid)
 
         direction_layout = QHBoxLayout()
         self.horizontal_button = QRadioButton("Horizontal")
         self.horizontal_button.setChecked(True)
+        self.horizontal_button.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
         self.horizontal_button.toggled.connect(self.set_horizontal)
         direction_layout.addWidget(self.horizontal_button)
 
         self.vertical_button = QRadioButton("Vertical")
+        self.vertical_button.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
         self.vertical_button.toggled.connect(self.set_vertical)
         direction_layout.addWidget(self.vertical_button)
         layout.addLayout(direction_layout)
@@ -385,16 +446,17 @@ class ManualPlacementWindow(QMainWindow):
     def set_vertical(self):
         self.direction = 1
 
-    def place_ship(self, row, col):
+    def place_ship(self, row, column):
         ship = ship_list[self.current_ship_index]
-        if self.game.player.is_space_available(row, col, ship.size, self.direction):
-            self.game.player.place_ship(ship, row, col, self.direction)
-            for r, c in ship.coordinates:
-                self.buttons[r][c].setText("X")
-                self.buttons[r][c].setStyleSheet("background-color: gray")
+        if self.game.player.is_space_available(row, column, ship.size, self.direction):
+            self.game.player.place_ship(ship, row, column, self.direction)
+            for row, column in ship.coordinates:
+                self.buttons[row][column].setText("X")
+                self.buttons[row][column].setStyleSheet("background-color: green")
             self.current_ship_index += 1
             if self.current_ship_index < len(ship_list):
                 self.ship_label.setText(f"Place {ship_list[self.current_ship_index].name}")
+                self.ship_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
             else:
                 self.close()
                 self.battle_window = BattleWindow(self.game)

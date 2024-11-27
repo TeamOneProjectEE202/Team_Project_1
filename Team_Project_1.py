@@ -134,11 +134,22 @@ class BattleshipGame(QMainWindow):
         
 #  StartWindow(QMainWindow) class
 class StartWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, music):
         super().__init__()
         self.setWindowTitle("Welcome to Battleship!")
         self.setGeometry(100, 100, 800, 600)
+
+        self.background_label = QLabel(self)
+        pixmap = QPixmap("c:/Users/welcome/OneDrive/سطح المكتب/Fall-2024/EE 202 LAB/Menu.jpeg") 
+        self.background_label.setPixmap(pixmap)
+        self.background_label.setScaledContents(True)
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+        
         self.initUI()
+        
+    def resizeEvent(self, event):
+        self.background_label.setGeometry(0, 0, self.width(), self.height())
+        super().resizeEvent(event)
 
     def initUI(self):
         # Main layout

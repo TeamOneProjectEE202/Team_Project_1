@@ -2,11 +2,11 @@ import random
 import sys
 import sqlite3
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QGridLayout, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QRadioButton
+    QApplication, QMainWindow, QGridLayout, QPushButton, QLabel, QVBoxLayout, QWidget, QMessageBox, QHBoxLayout, QRadioButton,
     QSlider, QDialog, QCheckBox)
 from PyQt5.QtCore import Qt, QProcess, QTimer 
 from PyQt5.QtMultimedia import QMediaPlayer
-
+from PyQt5.QtGui import QPixmap
 
 BOARD_SIZE = 10
 
@@ -147,7 +147,7 @@ class BattleshipGame(QMainWindow):
         self.database.commit()
     def save_game(self):
         player_board_str = "\n".join(["".join(row) for row in self.player_board])
-        ai_board_str = "\n".join(["".join(row) for row in self.ai_board)]
+        ai_board_str = "\n".join(["".join(row) for row in self.ai_board])
         player_hidden_board_str = "\n".join(["".join(row) for row in self.player_hidden_board])
         ai_hidden_board_str = "\n".join(["".join(row) for row in self.ai_hidden_board])
 
@@ -280,7 +280,7 @@ class StartWindow(QMainWindow):
 
     def start_game(self):
         self.close()  # Close the start window
-        self.placement_window = PlacementWindow(self.game)
+        self.placement_window = PlacementWindow(BattleshipGame())
         self.placement_window.show()
 
     def show_instructions(self):
@@ -366,7 +366,7 @@ class PlacementWindow(QMainWindow):
         self.setGeometry(100, 100, 800, 600)
     
         self.background_label = QLabel(self)
-        pixmap = QPixmap("############Main.jpg") 
+        pixmap = QPixmap("Main.jpg") 
         self.background_label.setPixmap(pixmap)
         self.background_label.setScaledContents(True)
         self.background_label.setGeometry(0, 0, self.width(), self.height())
@@ -432,7 +432,7 @@ class ManualPlacementWindow(QMainWindow):
         self.direction = 0
 
         self.background_label = QLabel(self)
-        pixmap = QPixmap("#################Battle.jpg") 
+        pixmap = QPixmap("Battle.jpg") 
         self.background_label.setPixmap(pixmap)
         self.background_label.setScaledContents(True)
         self.background_label.setGeometry(0, 0, self.width(), self.height())
@@ -511,13 +511,17 @@ class BattleWindow(QMainWindow):
         self.timer.start(1000)  # Update every 1 second
         self.initUI()
         self.background_label = QLabel(self)
-        pixmap = QPixmap(Battle2.png)
+        
+        pixmap = QPixmap("Battle2.png")
         self.background_label.setPixmap(pixmap)
         self.background_label.setScaledContents(True)
         self.background_label.setGeometry(0, 0, self.width() , self.height())
 
-    def reszieEvent(self.event):
+        self.initUI()
+
+    def reszieEvent(self,event):
         self.background_label.setGeometry(0,0,self.width(),self.height())
+        super().resizeEvent(event)
 
     def initUI(self):
         main_layout = QVBoxLayout()
@@ -571,7 +575,7 @@ class BattleWindow(QMainWindow):
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
                 self.ai_buttons[i][j].setFixedSize(30, 30)
-                self.ai_buttons[i][j].clicked.connect(lambda _, row=i, column=j: self.player_attack(r, c))
+                self.ai_buttons[i][j].clicked.connect(lambda _, row=i, column=j: self.player_attack(row, column))
                 self.ai_grid.addWidget(self.ai_buttons[i][j], i, j)
         main_layout.addWidget(ai_label)
         main_layout.addLayout(self.ai_grid)
@@ -613,7 +617,8 @@ class BattleWindow(QMainWindow):
                 if self.game.player_board[row][col] == "X":
                     self.player_buttons[row][col].setText("X")
                     self.player_buttons[row][col].setStyleSheet("background-color: green")
-           def save_game(self):
+                    
+    def save_game(self):
         self.game.save_game()
 
     def load_game(self):

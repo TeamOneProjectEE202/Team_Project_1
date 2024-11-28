@@ -170,7 +170,52 @@ class BattleshipGame(QMainWindow):
             }
             for ship in self.ai.ships
         ]
-        
+        self.cursor.execute('''
+            INSERT INTO game_state (player_board, ai_board, player_hidden_board, ai_hidden_board, score, elapsed_time, ship_counter, ai_ships_state)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            player_board_str,
+            ai_board_str,
+            player_hidden_board_str,
+            ai_hidden_board_str,
+            self.score,
+            self.elapsed_time,
+            self.ship_counter,
+            str(ai_ships_state)  # Save AI ship state as a string
+        ))
+        self.database.commit()
+        QMessageBox.information(self, "Game Saved", "Your game has been saved successfully!")
+
+    def load_game(self):
+        # Load the latest game state from the database
+        self.cursor.execute('SELECT * FROM game_state ORDER BY id DESC LIMIT 1')
+        row = self.cursor.fetchone()
+        if row:
+            player_board_str, ai_board_str, player_hidden_board_str, ai_hidden_board_str, self.score, self.elapsed_time, self.ship_counter, ai_ships_state_str = row[1:]
+
+            self.player_board = [list(row) for row in player_board_str.split("\n")]
+            self.ai_board = [list(row) for row in ai_board_str.split("\n")]
+            self.player_hidden_board = [list(row) for row in player_hidden_board_str.split("\n")]
+            self.ai_hidden_board = [list(row) for row in ai_hidden_board_str.split("\n")]
+
+            # Restore AI ships state
+            ai_ships_state = eval(ai_ships_state_str)  # Convert the string back to a list of dictionaries
+            self.ai.ships = []
+            for ship_data in ai_ships_state:
+                ship = Ship(ship_data["name"], ship_data["size"])
+                ship.coordinates = ship_data["coordinates"]
+                ship.hits = ship_data["hits"]
+                self.ai.ships.append(ship)
+
+            QMessageBox.information(self, "Game Loaded", "Your game has been loaded successfully!")
+        else:
+            QMessageBox.warning(self, "No Save Found", "No saved game to load.")
+
+    def closeEvent(self, event):
+        # Close database connection when the app is closed
+        self.database.close()
+        super().closeEvent(event)
+
 #  Start Window class
 class StartWindow(QMainWindow):
     def __init__(self, music):

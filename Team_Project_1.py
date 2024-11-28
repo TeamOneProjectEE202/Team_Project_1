@@ -128,15 +128,6 @@ class BattleshipGame(QMainWindow):
         self.database = sqlite3.connect("BattleShipGame_1.db")
         self.cursor = self.database.cursor()
         self.create_tables()
-        self.create_menu()
-
-    def create_menu(self):
-        menu_bar = self.menuBar()
-        file_menu = menu_bar.addMenu("File")
-        save_action = file_menu.addAction("Save Game")
-        save_action.triggered.connect(self.save_game)
-        load_action = file_menu.addAction("Load Game")
-        load_action.triggered.connect(self.load_game)
 
     def create_tables(self):
         # Making the tables for our datastore][.

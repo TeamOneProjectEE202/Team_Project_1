@@ -510,6 +510,14 @@ class BattleWindow(QMainWindow):
         self.timer.timeout.connect(self.update_timer)  # Connect timer to update function
         self.timer.start(1000)  # Update every 1 second
         self.initUI()
+        self.background_label = QLabel(self)
+        pixmap = QPixmap(Battle2.png)
+        self.background_label.setPixmap(pixmap)
+        self.background_label.setScaledContents(True)
+        self.background_label.setGeometry(0, 0, self.width() , self.height())
+
+    def reszieEvent(self.event):
+        self.background_label.setGeometry(0,0,self.width(),self.height())
 
     def initUI(self):
         main_layout = QVBoxLayout()
@@ -527,10 +535,26 @@ class BattleWindow(QMainWindow):
         # Score Label
         self.score_label = QLabel(f"Score: {self.game.score}")
         self.score_label.setAlignment(Qt.AlignCenter)
+        self.score_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white;")
         main_layout.addWidget(self.score_label)
+        
+        # Save and Load Buttons
+        save_load_layout = QHBoxLayout()
+        save_button = QPushButton("Save Game")
+        save_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color:black;")
+        save_button.clicked.connect(self.save_game)
+        save_load_layout.addWidget(save_button)
+
+        load_button = QPushButton("Quick Load")
+        load_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color:black;")
+        load_button.clicked.connect(self.load_game)
+        save_load_layout.addWidget(load_button)
+
+        main_layout.addLayout(save_load_layout)
 
         # Player and AI Board
         player_label = QLabel("Your Board:")
+        player_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white;")
         self.player_grid = QGridLayout()
         self.player_buttons = [[QPushButton("~") for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
         for i in range(BOARD_SIZE):
@@ -540,18 +564,20 @@ class BattleWindow(QMainWindow):
         main_layout.addWidget(player_label)
         main_layout.addLayout(self.player_grid)
 
-        ai_label = QLabel("AI Board (Hidden):")
+        ai_label = QLabel("Enemy Board :")
+        ai_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white;")
         self.ai_grid = QGridLayout()
         self.ai_buttons = [[QPushButton("~") for _ in range(BOARD_SIZE)] for _ in range(BOARD_SIZE)]
         for i in range(BOARD_SIZE):
             for j in range(BOARD_SIZE):
                 self.ai_buttons[i][j].setFixedSize(30, 30)
-                self.ai_buttons[i][j].clicked.connect(lambda _, r=i, c=j: self.player_attack(r, c))
+                self.ai_buttons[i][j].clicked.connect(lambda _, row=i, column=j: self.player_attack(r, c))
                 self.ai_grid.addWidget(self.ai_buttons[i][j], i, j)
         main_layout.addWidget(ai_label)
         main_layout.addLayout(self.ai_grid)
 
-        restart_button = QPushButton("Restart Game")
+        restart_button = QPushButton("Back to Menu")
+        restart_button.setStyleSheet("font-size: 18px; padding: 10px; color: white; background-color:black;")
         restart_button.clicked.connect(self.restart_game)
         main_layout.addWidget(restart_button)
 
@@ -564,9 +590,10 @@ class BattleWindow(QMainWindow):
     def update_timer(self):
         self.game.elapsed_time += 1
         self.timer_label.setText(f"Time: {self.game.elapsed_time}s")
+        self.timer_label.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
 
     def restart_game(self):
-        QMessageBox.information(self, "Restarting", "The game will restart.")
+        QMessageBox.information(self, "Ending Game...", "The game will end and you will be sent to the Main Menu.")
         QApplication.quit()
         QProcess.startDetached(sys.executable, sys.argv)
 
@@ -585,7 +612,32 @@ class BattleWindow(QMainWindow):
             for col in range(BOARD_SIZE):
                 if self.game.player_board[row][col] == "X":
                     self.player_buttons[row][col].setText("X")
-                    self.player_buttons[row][col].setStyleSheet("background-color: gray")
+                    self.player_buttons[row][col].setStyleSheet("background-color: green")
+           def save_game(self):
+        self.game.save_game()
+
+    def load_game(self):
+        self.game.load_game()
+        self.update_boards()
+
+    def update_boards(self):
+        # Update the player board UI
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                cell = self.game.player_board[row][col]
+                button = self.player_buttons[row][col]
+                if cell == "X":
+                    button.setText("X")
+                    button.setStyleSheet("background-color: green")
+                elif cell == "H":
+                    button.setText("H")
+                    button.setStyleSheet("background-color: red")
+                elif cell == "O":
+                    button.setText("O")
+                    button.setStyleSheet("background-color: blue")
+                else:
+                    button.setText("~")
+                    button.setStyleSheet("background-color: none") 
 
     def player_attack(self, row, col):
         if self.game.ai_hidden_board[row][col] in ["H", "O"]:

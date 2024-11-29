@@ -113,6 +113,8 @@ class BattleshipGame(QMainWindow):
         super().__init__()
         self.setWindowTitle("Battleship Game")
         self.setGeometry(100, 100, 800, 600)
+        self.player_score = 0
+        self.ai_score = 0
 
         self.player_board = [[" "] * BOARD_SIZE for _ in range(BOARD_SIZE)]
         self.ai_board = [[" "] * BOARD_SIZE for _ in range(BOARD_SIZE)]
@@ -526,17 +528,54 @@ class BattleWindow(QMainWindow):
     def initUI(self):
         main_layout = QVBoxLayout()
 
-        # Timer Label
+        # Timer Label #A
+        timer_layout = QVBoxLayout()
         self.timer_label = QLabel("Time: 0s")
-        self.timer_label.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(self.timer_label)
+        self.timer_label.setStyleSheet("font-size: 16px; font-weight: bold;")
+        timer_layout.addWidget(self.timer_label)
+        main_layout.addLayout(timer_layout)
 
-        # Ship Counter Label
+
+        # Ship Counter Label #A
         self.counter_label = QLabel(f"Remaining AI Ships: {self.game.ship_counter}")
         self.counter_label.setAlignment(Qt.AlignCenter)
+        self.counter_label.setStyleSheet("font-size: 18px; color: red; font-weight: bold;") #A
         main_layout.addWidget(self.counter_label)
 
-        # Score Label
+        # player Score Label #A
+        player_score_layout = QVBoxLayout()
+        player_score_label_title = QLabel("Player Score")
+        player_score_label_title.setStyleSheet("color: green; font-size: 18px; font-weight: bold;")
+        player_score_layout.addWidget(player_score_label_title)
+
+        self.player_score_label = QLabel("0")
+        self.player_score_label.setStyleSheet("color: green; font-size: 16px;")
+        player_score_layout.addWidget(self.player_score_label)
+        main_layout.addLayout(player_score_layout)
+        # Ai score A
+        ai_score_layout = QVBoxLayout()
+        ai_score_label_title = QLabel("AI Score")
+        ai_score_label_title.setStyleSheet("color: red; font-size: 18px; font-weight: bold;")
+        ai_score_layout.addWidget(ai_score_label_title)
+
+        self.ai_score_label = QLabel("0")
+        self.ai_score_label.setStyleSheet("color: red; font-size: 16px;")
+        ai_score_layout.addWidget(self.ai_score_label)
+
+        main_layout.addLayout(ai_score_layout)
+        # AI HEALTH A
+        ai_health_layout = QVBoxLayout()
+        ai_health_label_title = QLabel("AI Ships Health")
+        ai_health_label_title.setStyleSheet("color: red; font-size: 18px; font-weight: bold;")
+        ai_health_layout.addWidget(ai_health_label_title)
+
+        self.ai_health_label = QLabel("\n".join([f"{ship.name}: {ship.size}" for ship in ship_list]))
+        self.ai_health_label.setStyleSheet("color: red; font-size: 16px;")
+        ai_health_layout.addWidget(self.ai_health_label)
+
+        main_layout.addLayout(ai_health_layout)
+
+        # Score Label  A
         self.score_label = QLabel(f"Score: {self.game.score}")
         self.score_label.setAlignment(Qt.AlignCenter)
         self.score_label.setStyleSheet("font-size: 15px; font-weight: bold; color: white;")
@@ -601,7 +640,13 @@ class BattleWindow(QMainWindow):
         QApplication.quit()
         QProcess.startDetached(sys.executable, sys.argv)
 
-
+    def update_ship_status(self): # update resualt #A
+        ai_status = "\n".join([
+            f"{ship.name}: {max(ship.size - ship.hits, 0)}" 
+            for ship in self.game.ai.ships 
+        ])
+        self.ai_health_label.setText(f"AI Ships:\n{ai_status}")  # Update AI ship health only based on player's attacks
+   
     def start_game(self):
         for ship in ship_list:
             placed = False
@@ -612,18 +657,22 @@ class BattleWindow(QMainWindow):
                 if self.game.ai.is_space_available(row, col, ship.size, direction):
                     self.game.ai.place_ship(ship, row, col, direction)
                     placed = True
+        self.update_ship_status()
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
                 if self.game.player_board[row][col] == "X":
                     self.player_buttons[row][col].setText("X")
                     self.player_buttons[row][col].setStyleSheet("background-color: green")
                     
+                      
     def save_game(self):
         self.game.save_game()
+        self.update_ship_status() #A
 
     def load_game(self):
         self.game.load_game()
         self.update_boards()
+        self.update_ship_status() #A
 
     def update_boards(self):
         # Update the player board UI
@@ -642,7 +691,8 @@ class BattleWindow(QMainWindow):
                     button.setStyleSheet("background-color: blue")
                 else:
                     button.setText("~")
-                    button.setStyleSheet("background-color: none") 
+                    button.setStyleSheet("background-color: none")
+        # Add Update the AI board UI here 
 
     def player_attack(self, row, col):
         if self.game.ai_hidden_board[row][col] in ["H", "O"]:
@@ -654,26 +704,28 @@ class BattleWindow(QMainWindow):
             self.game.ai_board[row][col] = "H"
             self.ai_buttons[row][col].setText("H")
             self.ai_buttons[row][col].setStyleSheet("background-color: red")
-            self.game.score += 10
+            self.game.player_score += 10
             QMessageBox.information(self, "Hit", "You hit an AI ship!")
 
             for ship in self.game.ai.ships:
                 if (row, col) in ship.coordinates:
                     ship.hits += 1
-                    if ship.is_sunk():
-                        self.game.score += 50
+                    if ship.is_sunk() and not hasattr(ship, 'sunk_announced'):  # Check if the ship is fully sunk
+                        ship.sunk_announced = True
+                        self.game.player_score += 50
                         self.game.ship_counter -= 1
                         self.counter_label.setText(f"Remaining AI Ships: {self.game.ship_counter}")
                         QMessageBox.information(self, "Ship Sunk", f"You sunk the AI's {ship.name}!")
+                    break
 
         else:
             self.game.ai_hidden_board[row][col] = "O"
             self.game.ai_board[row][col] = "O"
             self.ai_buttons[row][col].setText("O")
             self.ai_buttons[row][col].setStyleSheet("background-color: blue")
-            self.game.score -= 1
-
-        self.score_label.setText(f"Score: {self.game.score}")
+            self.game.player_score -= 1
+       
+        self.update_score()
 
         if all(cell != "X" for row in self.game.ai_board for cell in row):
             QMessageBox.information(self, "Victory", "You sank all AI ships!")
@@ -684,6 +736,22 @@ class BattleWindow(QMainWindow):
 
     def ai_turn(self):
         hit = self.game.ai.attack(self.game.player_board)
+        if hit:  # A
+            self.game.ai_score += 10
+            print("AI scored a hit!")
+            for ship in self.game.player.ships:
+                if any((row, col) in ship.coordinates for row, col in self.game.ai.attacked_cells):  # تحقق إذا كانت الخلية جزءًا من السفينة
+                    ship.hits += 1
+                    if ship.is_sunk() and not hasattr(ship, 'sunk_announced'):  # إذا تم غرق السفينة
+                        ship.sunk_announced = True
+                        self.game.ai_score += 50
+                        QMessageBox.information(self, "AI Sunk a Ship", f"The AI sunk your {ship.name}!")
+                    break
+        else:
+            self.game.ai_score -= 1
+            print("AI missed!")
+        self.update_ship_status()
+        self.update_score()
 
         for row in range(BOARD_SIZE):
             for col in range(BOARD_SIZE):
@@ -697,6 +765,12 @@ class BattleWindow(QMainWindow):
         if all(cell != "X" for row in self.game.player_board for cell in row):
             QMessageBox.information(self, "Defeat", "AI sank all your ships!")
             sys.exit()
+def update_score(self): #A
+        self.player_score_label.setText(f"{self.game.player_score}")
+        self.player_score_label.setStyleSheet("color: black; font-size: 16px; font-weight: bold;")
+
+        self.ai_score_label.setText(f"{self.game.ai_score}")
+        self.ai_score_label.setStyleSheet("color: red; font-size: 16px; font-weight: bold;")
 
 def main():
     app = QApplication(sys.argv)
